@@ -1,0 +1,10 @@
+{
+    "test":{
+        "PORT": 3000,
+        "PATH_TO_BOOKS": "http://localhost:3000/books/"
+    },
+    "development":{
+        "PORT": 3000,
+        "PATH_TO_BOOKS": "http://localhost:3000/books/"
+    }
+}
