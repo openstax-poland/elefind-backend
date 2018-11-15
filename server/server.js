@@ -56,6 +56,15 @@ app.get('/', (req, res) => {
     }
 })
 
+app.get('/books', (req, res) => {
+    console.log('GET /books')
+    try {
+        res.send(BOOKS)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 const PAGE_LOAD_TIME = 10 * 60 * 1000 // Wait 10 minutes before timing out (large books take a long time to open)
 
 // Status codes
