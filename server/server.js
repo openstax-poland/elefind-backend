@@ -100,16 +100,19 @@ const getResults = async (selector, url) => {
             const [id, page] = el
             let title = page.querySelector('*:not([data-type="metadata"]) > [data-type="document-title"]')
             if (title) {
-            if (!title.querySelector('.os-number')) {
-                const chapterNumber = title.parentNode.parentNode.querySelector('h1[data-type="document-title"] .os-number')
-                if (chapterNumber) {
-                title = chapterNumber.innerText + ' ' + title.innerText
+                if (!title.querySelector('.os-number')) {
+                    const chapterNumber = title.parentNode.parentNode.querySelector('h1[data-type="document-title"] .os-number')
+                    const chapterTitle = title.parentNode.parentNode.querySelector('h1[data-type="document-title"]').innerText
+                    if (chapterNumber) {
+                        title = chapterNumber.innerText + ' ' + title.innerText
+                    } else if (chapterTitle && chapterTitle !== 'Preface') {
+                        title = 'Chapter: ' + chapterTitle + ' Module: ' + title.innerText
+                    } else {
+                        title = title.innerText
+                    }
                 } else {
-                title = title.innerText
+                    title = title.innerText
                 }
-            } else {
-                title = title.innerText
-            }
             }
 
             const isSelectorInThisPage = page.querySelectorAll(selector)
