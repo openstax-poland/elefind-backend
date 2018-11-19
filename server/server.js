@@ -92,37 +92,58 @@ const getResults = async (selector, url) => {
         console.log(`Opened "${url}"`)
 
         const results = await page.evaluate((selector) => {
-        const pages = document.querySelectorAll('[data-type="composite-page"], [data-type="page"]')
-        console.log(`Found ${Object.entries(pages).length} pages.`)
+            const pages = document.querySelectorAll('[data-type="composite-page"], [data-type="page"]')
+            console.log(`Found ${Object.entries(pages).length} pages.`)
 
-        const results = []
-        Object.entries(pages).forEach(el => {
-            const [id, page] = el
-            let title = page.querySelector('*:not([data-type="metadata"]) > [data-type="document-title"]')
-            if (title) {
-                if (!title.querySelector('.os-number')) {
-                    const chapterNumber = title.parentNode.parentNode.querySelector('h1[data-type="document-title"] .os-number')
-                    const chapterTitle = title.parentNode.parentNode.querySelector('h1[data-type="document-title"]').innerText
-                    if (chapterNumber) {
-                        title = chapterNumber.innerText + ' ' + title.innerText
-                    } else if (chapterTitle && chapterTitle !== 'Preface') {
-                        title = 'Chapter: ' + chapterTitle + ' Module: ' + title.innerText
+            const results = []
+            Object.entries(pages).forEach(el => {
+                const [id, page] = el
+                let title = page.querySelector('*:not([data-type="metadata"]) > [data-type="document-title"]')
+                if (title) {
+                    if (!title.querySelector('.os-number')) {
+                        const chapterNumber = title.parentNode.parentNode.querySelector('h1[data-type="document-title"] .os-number')
+                        const chapterTitle = title.parentNode.parentNode.querySelector('h1[data-type="document-title"]').innerText
+                        if (chapterNumber) {
+                            title = chapterNumber.innerText + ' ' + title.innerText
+                        } else if (chapterTitle && chapterTitle !== 'Preface') {
+                            title = 'Chapter: ' + chapterTitle + ' Module: ' + title.innerText
+                        } else {
+                            title = title.innerText
+                        }
                     } else {
                         title = title.innerText
                     }
-                } else {
-                    title = title.innerText
                 }
-            }
 
-            const isSelectorInThisPage = page.querySelectorAll(selector)
+                let isSelectorInThisPage = false
 
-            if (isSelectorInThisPage.length > 0) {
-            results.push({section_name: title, link: null, instances: isSelectorInThisPage.length})
-            }
-        })
+                const splitAtHas = selector.split(':has') // table:has(img)
+                if (selector.match(':has')) {
+                    if (splitAtHas.length > 2) {
+                        throw new Error('We do not support nested :has selector.')
+                    }
 
-        return results
+                    let [left, right] = splitAtHas // table | (img)
+                    right = right.slice(1, -1) // remove ()
+
+                    const parentElements = page.querySelectorAll(left)
+                    isSelectorInThisPage = [...parentElements].filter(el => {
+                        if (el.querySelector(right)) {
+                            return true
+                        } else {
+                            return false
+                        }
+                    })
+                } else {
+                    isSelectorInThisPage = page.querySelectorAll(selector)
+                }
+
+                if (isSelectorInThisPage.length > 0) {
+                    results.push({section_name: title, link: null, instances: isSelectorInThisPage.length})
+                }
+            })
+
+            return results
         }, selector)
 
         await browser.close()
@@ -137,25 +158,48 @@ const getResults = async (selector, url) => {
 }
 
 const isSelectorValid = async (selector) => {
-  if (!selector) {
-    console.log(`You have to provide selector.`)
-    return false
-  }
+    let success = {
+        status: true,
+        message: 'OK',
+    }
+
+    if (!selector) {
+        console.log(`You have to provide selector.`)
+        return success
+    }
   
-  try {
-    const dom = await new JSDOM()
-    await dom.window.document.querySelector(selector)
-    return true
-  } catch(e) {
-    console.log(`Provided selector: "${selector}" is not valid.\nDetails: ${e}`)
-    return false
-  }
+    try {
+        const dom = await new JSDOM()
+        const splitAtHas = await selector.split(':has')
+        if (await selector.match(':has')) {
+            if (splitAtHas.length > 2) {
+                throw new Error('We do not support nested :has selector.')
+            }
+
+            let [left, right] = splitAtHas // table | (img)
+            right = right.slice(1, -1) // remove ()
+
+            await dom.window.document.querySelector(left)
+            await dom.window.document.querySelector(right)
+
+            return success
+        } else {
+            await dom.window.document.querySelector(selector) // this will throw Error if fails
+            return success
+        }
+    } catch(e) {
+        console.log(`Provided selector: "${selector}" is not valid.\nDetails: ${e}`)
+        return {
+            status: false,
+            message: `Provided selector: "${selector}" is not valid.`,
+        }
+    }
 }
 
 app.get('/elements', elementsLimiter, async (req, res) => {
     req.connection.setTimeout(7 * 60 * 1000) // 7 minutes - Opening books may take a lot of time
 
-    console.log('GET /elements', req.query)
+    console.log(new Date(), 'GET /elements', req.query)
     try {
         const bookName = req.query.bookName.replace('_', ' ')
         const selector = req.query.element
@@ -177,18 +221,19 @@ app.get('/elements', elementsLimiter, async (req, res) => {
         let results = []
 
         const pathToFile = process.env.PATH_TO_BOOKS + xhtml
-        if (await isSelectorValid(selector)) {
+        const validatedSelector = await isSelectorValid(selector)
+        if (validatedSelector.status) {
             console.log(`Starting searching for "${selector}" inside "${xhtml}"`)
 
             results = await getResults(selector, pathToFile)
         } else {
-            throw new Error(`Provided selector: "${selector}" is not valid.`)
+            throw new Error(validatedSelector.message)
         }
 
         res.send({Results: results})
     } catch (e) {
         console.log(e)
-        res.status(500).send(e)
+        res.status(500).send(e.message)
     }
 })
 
