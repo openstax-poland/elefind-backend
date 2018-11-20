@@ -117,8 +117,28 @@ const getResults = async (selector, url) => {
 
                 let isSelectorInThisPage = false
 
-                const splitAtHas = selector.split(':has') // table:has(img)
-                if (selector.match(':has')) {
+                if (selector.match(':hasText')) {
+                    const splitAtHasText = selector.split(':hasText') // .howto:hasText(Step)
+
+                    if (splitAtHasText.length > 2) {
+                        throw new Error('We do not support nested :hasText selector.')
+                    }
+
+                    let [left, text] = splitAtHasText // .howto | (Step)
+                    right = text.slice(1, -1) // remove ()
+
+                    const parentElements = page.querySelectorAll(left)
+                    isSelectorInThisPage = [...parentElements].filter(el => {
+                        if (el.innerText.match(text)) {
+                            return true
+                        } else {
+                            return false
+                        }
+                    })
+
+                } else if (selector.match(':has')) {
+                    const splitAtHas = selector.split(':has') // table:has(img)
+
                     if (splitAtHas.length > 2) {
                         throw new Error('We do not support nested :has selector.')
                     }
@@ -165,12 +185,18 @@ const isSelectorValid = async (selector) => {
 
     if (!selector) {
         console.log(`You have to provide selector.`)
-        return success
+        return {
+            status: false,
+            message: 'You have to provide selector.',
+        }
     }
   
     try {
         const dom = await new JSDOM()
         const splitAtHas = await selector.split(':has')
+        if (selector.match(':hasText')) {
+            return success
+        }
         if (await selector.match(':has')) {
             if (splitAtHas.length > 2) {
                 throw new Error('We do not support nested :has selector.')
