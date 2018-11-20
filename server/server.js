@@ -82,8 +82,18 @@ const getResults = async (selector, url) => {
         
         page.on('pageerror', msgText => {
         console.log('browser-ERROR', msgText)
-        return STATUS_CODE.ERROR
+            return STATUS_CODE.ERROR
         })
+
+        await page.setRequestInterception(true)
+	
+	page.on('request', request => {
+    	    if (request.resourceType() === 'image') {
+                request.abort()
+ 	    } else {
+	        request.continue()
+            }
+	})
 
         console.log(`Opening "${url}"`)
         await page.goto(url, {
