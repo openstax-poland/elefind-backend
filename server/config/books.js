@@ -8,7 +8,7 @@ const books = [
     baked: true,
   },
   {
-    bookName: 'Biology for AP',
+    bookName: 'Biology for AP Courses',
     fileName: 'apbiology-baked.xhtml',
     baked: true,
   },
