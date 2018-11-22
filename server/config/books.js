@@ -220,7 +220,7 @@ const books = [
     contentFetchedFrom: 'katalyst01.cnx.org',
   },
   {
-    bookName: 'Polish University Physics Volume 1',
+    bookName: 'Fizyka dla szkol wyzszych Tom 1',
     fileName: 'katalyst-physics-baked.xhtml',
     baked: true,
     contentFetchedAt: '15.11.2018',
