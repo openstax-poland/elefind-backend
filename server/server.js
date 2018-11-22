@@ -240,33 +240,33 @@ app.get('/elements', elementsLimiter, async (req, res) => {
         const bookName = req.query.bookName.replace(/_/g, ' ')
         const selector = req.query.element
 
-        let xhtml = ''
+        let requestedBook = {}
 
         BOOKS.some(book => {
             if (book.bookName === bookName) {
-                xhtml = book.fileName
+                requestedBook = book
                 return true
             }
         })
 
-        if (!xhtml) {
+        if (!requestedBook.fileName) {
             console.log(`Couldn't find any book with name: ${bookName}. Maybe this book is not yet avaible for searching custom elements.`)
             throw new Error(`Couldn't find any book with name: ${bookName}. Maybe this book is not yet avaible for searching custom elements.`)
         }
 
         let results = []
 
-        const pathToFile = process.env.PATH_TO_BOOKS + xhtml
+        const pathToFile = process.env.PATH_TO_BOOKS + requestedBook.fileName
         const validatedSelector = await isSelectorValid(selector)
         if (validatedSelector.status) {
-            console.log(`Starting searching for "${selector}" inside "${xhtml}"`)
+            console.log(`Starting searching for "${selector}" inside "${requestedBook.fileName}"`)
 
             results = await getResults(selector, pathToFile)
         } else {
             throw new Error(validatedSelector.message)
         }
 
-        res.send({Results: results})
+        res.send({Results: results, ...requestedBook})
     } catch (e) {
         console.log(e)
         res.status(500).send(e.message)
