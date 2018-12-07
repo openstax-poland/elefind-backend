@@ -81,19 +81,24 @@ const getResults = async (selector, url) => {
         const page = await browser.newPage()
         
         page.on('pageerror', msgText => {
-        console.log('browser-ERROR', msgText)
+            //console.log('browser-ERROR', msgText)
             return STATUS_CODE.ERROR
         })
 
         await page.setRequestInterception(true)
 	
-	page.on('request', request => {
-    	    if (request.resourceType() === 'image') {
+        page.on('request', request => {
+            if (
+                request.resourceType() === 'image' || 
+                request.resourceType() === 'script' ||
+                request.resourceType() === 'sub_frame' ||
+                request.resourceType() === 'other'
+                ) {
                 request.abort()
- 	    } else {
-	        request.continue()
+            } else {
+                request.continue()
             }
-	})
+        })
 
         console.log(`Opening "${url}"`)
         await page.goto(url, {
