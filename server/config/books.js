@@ -4,9 +4,9 @@
 const books = [
   {
     bookName: 'American Government',
-    fileName: 'american-gov-raw.xhtml',
-    baked: false,
-    contentFetchedAt: '15.11.2018',
+    fileName: 'us-government-baked.xhtml',
+    baked: true,
+    contentFetchedAt: '16.11.2018',
     contentFetchedFrom: 'katalyst01.cnx.org',
   },
   {
