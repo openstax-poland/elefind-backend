@@ -243,7 +243,7 @@ app.get('/elements', elementsLimiter, async (req, res) => {
     console.log(new Date(), 'GET /elements', req.query)
     try {
         const bookName = req.query.bookName.replace(/_/g, ' ')
-        const selector = req.query.element
+        const selector = req.query.element.replace(/\'/g, '"')
 
         let requestedBook = {}
 
