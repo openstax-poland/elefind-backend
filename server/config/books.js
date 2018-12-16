@@ -31,7 +31,7 @@ const books = [
     contentFetchedFrom: 'katalyst01.cnx.org',
   },
   {
-    bookName: 'AP Macroeconomics 2e',
+    bookName: 'Principles of Macroeconomics for AP Courses 2e',
     fileName: 'principles-macro2e-baked.xhtml',
     baked: true,
     contentFetchedAt: '15.11.2018',
