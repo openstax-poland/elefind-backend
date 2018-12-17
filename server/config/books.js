@@ -10,7 +10,7 @@ const books = [
     contentFetchedFrom: 'katalyst01.cnx.org',
   },
   {
-    bookName: 'Anatomy & Physiology',
+    bookName: 'Anatomy and Physiology',
     fileName: 'anatomy-physiology-raw.xhtml',
     baked: false,
     contentFetchedAt: '15.11.2018',
